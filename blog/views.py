@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
+
+from mysite import settings
 from .models import Post, Comment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
@@ -128,6 +130,9 @@ def post_search(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
+            assert isinstance(Post.published.annotate(
+                similarity=TrigramSimilarity('title', query),
+            ).filter, object)
             results = Post.published.annotate(
                 similarity=TrigramSimilarity('title', query),
             ).filter(similarity__gt=0.1).order_by('-similarity')
